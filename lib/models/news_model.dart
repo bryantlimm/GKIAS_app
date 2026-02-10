@@ -24,7 +24,7 @@ class NewsItem {
     return NewsItem(
       id: doc.id,
       title: data['title'] ?? 'No Title',
-      content: data['content'] ?? '',
+      content: data['body'] ?? '',
       // We convert Firestore "Timestamp" to a Flutter "DateTime"
       date: (data['date'] as Timestamp).toDate(),
       imageUrl: data['imageUrl'] ?? '',
