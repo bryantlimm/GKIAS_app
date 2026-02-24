@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home_screen.dart';
 import 'create_service_screen.dart';
 import 'package:intl/intl.dart';
+import 'admin_manage_staff_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -221,16 +222,6 @@ class AdminServicesScreen extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-class AdminManageStaffScreen extends StatelessWidget {
-  const AdminManageStaffScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text("Halaman Admin: Kelola Pelayan (Segera Hadir)")),
     );
   }
 }

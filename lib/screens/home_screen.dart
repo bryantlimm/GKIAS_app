@@ -4,7 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/news_model.dart';
 import 'news_detail_screen.dart';
 import 'package:intl/intl.dart';
-import 'login_screen.dart'; // Make sure this matches your login screen filename
+import 'login_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -230,7 +231,10 @@ class HomeScreen extends StatelessWidget {
                               // C. Notification Bell
                               InkWell(
                                 onTap: () {
-                                  print("Notification Bell Clicked!");
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                                  );
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
@@ -241,7 +245,7 @@ class HomeScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              
+
                               const SizedBox(width: 10),
 
                               // D. The Logout Button FIX

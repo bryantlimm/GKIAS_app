@@ -22,7 +22,6 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
 
   List<Map<String, String>> _assignments = [];
 
-  // NEW: Initialize the form with existing data if we are in "Edit Mode"
   @override
   void initState() {
     super.initState();
@@ -33,15 +32,23 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
       _selectedMinistry = data['ministry'];
       _descriptionController.text = data['description'] ?? '';
       
-      // Load existing assignments safely
+      // Load existing assignments
       if (data['assignments'] != null) {
-        _assignments = List<Map<String, dynamic>>.from(data['assignments'])
-            .map((e) => {
-                  'role': e['role'].toString(),
-                  'volunteerId': e['volunteerId'].toString(),
-                  'volunteerName': e['volunteerName'].toString(),
-                })
-            .toList();
+        try {
+          _assignments = (data['assignments'] as List<dynamic>)
+              .cast<Map<String, dynamic>>()
+              .map((e) => {
+                    'role': e['role']?.toString() ?? '',
+                    'volunteerId': e['volunteerId']?.toString() ?? '',
+                    'volunteerName': e['volunteerName']?.toString() ?? '',
+                    'status': e['status']?.toString() ?? 'pending',
+                  })
+              .toList();
+          print('Loaded ${_assignments.length} existing assignments');
+        } catch (e) {
+          print('Error loading assignments: $e');
+          _assignments = [];
+        }
       }
     }
   }
@@ -60,7 +67,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
 
   void _addAssignmentRow() {
     setState(() {
-      _assignments.add({'role': '', 'volunteerId': '', 'volunteerName': ''});
+      _assignments.add({'role': '', 'volunteerId': '', 'volunteerName': '', 'status': 'pending'});
     });
   }
 
@@ -135,16 +142,44 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mohon pilih jenis kebaktian.")));
       return;
     }
+    
+    // Validate all assignments have volunteerId and role
+    for (int i = 0; i < _assignments.length; i++) {
+      if (_assignments[i]['volunteerId']!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Petugas #${i + 1} belum memilih nama orang.")),
+        );
+        return;
+      }
+      if (_assignments[i]['role']!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Petugas #${i + 1} belum mengisi role.")),
+        );
+        return;
+      }
+    }
 
     setState(() => _isSubmitting = true);
 
     try {
+      // Ensure all assignments have status field and correct types
+      final assignmentsWithStatus = _assignments.map((a) {
+        return <String, dynamic>{
+          'role': a['role'] ?? '',
+          'volunteerId': a['volunteerId'] ?? '',
+          'volunteerName': a['volunteerName'] ?? '',
+          'status': a['status'] ?? 'pending',
+        };
+      }).toList();
+
+      print('Assignments to save: $assignmentsWithStatus');
+
       // Prepare the data payload
-      final serviceData = {
+      final serviceData = <String, dynamic>{
         'date': Timestamp.fromDate(_selectedDate!),
         'ministry': _selectedMinistry, 
         'description': _descriptionController.text,
-        'assignments': _assignments, 
+        'assignments': assignmentsWithStatus, 
       };
 
       // NEW: Check if we are Updating or Creating
