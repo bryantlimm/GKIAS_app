@@ -6,6 +6,7 @@ import 'news_detail_screen.dart';
 import 'package:intl/intl.dart';
 import 'login_screen.dart';
 import 'notifications_screen.dart';
+import 'admin_notification_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -230,11 +231,56 @@ class HomeScreen extends StatelessWidget {
 
                               // C. Notification Bell
                               InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                                onTap: () async {
+                                  final currentUser = FirebaseAuth.instance.currentUser;
+                                  if (currentUser == null) return; // Safety check
+
+                                  // 1. Show a quick loading indicator so the app doesn't feel frozen
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (context) => const Center(child: CircularProgressIndicator()),
                                   );
+
+                                  try {
+                                    // 2. Fetch this specific user's document from Firestore
+                                    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                                        .collection('users')
+                                        .doc(currentUser.uid)
+                                        .get();
+
+                                    String role = 'jemaat'; // Default fallback
+                                    if (userDoc.exists) {
+                                      var data = userDoc.data() as Map<String, dynamic>;
+                                      role = data['role'] ?? 'jemaat';
+                                    }
+
+                                    // 3. Close the loading indicator
+                                    if (context.mounted) Navigator.pop(context);
+
+                                    // 4. Route based on the role we just fetched!
+                                    if (context.mounted) {
+                                      if (role == 'admin') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const AdminNotificationScreen()),
+                                        );
+                                      } else {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                                        );
+                                      }
+                                    }
+                                  } catch (e) {
+                                    // If something goes wrong, close the loading indicator and print error
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text("Gagal memuat notifikasi: $e")),
+                                      );
+                                    }
+                                  }
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.all(8),

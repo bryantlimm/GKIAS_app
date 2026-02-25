@@ -5,6 +5,7 @@ import 'home_screen.dart';
 import 'create_service_screen.dart';
 import 'package:intl/intl.dart';
 import 'admin_manage_staff_screen.dart';
+import 'staff_volunteer_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -76,7 +77,7 @@ class _MainScreenState extends State<MainScreen> {
       navItems.add(
         const BottomNavigationBarItem(
           icon: Icon(Icons.assignment_ind_rounded),
-          label: 'Jadwal Saya', // My Schedule
+          label: 'Jadwal Saya',
         ),
       );
     } else if (_userRole == 'admin') {
@@ -123,15 +124,15 @@ class _MainScreenState extends State<MainScreen> {
 // PLACEHOLDER SCREENS (We will build these out next)
 // ==========================================
 
-class StaffVolunteerScreen extends StatelessWidget {
-  const StaffVolunteerScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text("Halaman Pelayan/Volunteer (Segera Hadir)")),
-    );
-  }
-}
+// class StaffVolunteerScreen extends StatelessWidget {
+//   const StaffVolunteerScreen({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Scaffold(
+//       body: Center(child: Text("Halaman Pelayan/Volunteer (Segera Hadir)")),
+//     );
+//   }
+// }
 
 // class AdminServicesScreen extends StatelessWidget {
 //   const AdminServicesScreen({super.key});
