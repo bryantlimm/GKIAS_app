@@ -46,7 +46,7 @@ class AdminNotificationScreen extends StatelessWidget {
               String status = assignment['status'] ?? 'pending';
               
               // Only grab people who have responded
-              if (status == 'accepted' || status == 'rejected') {
+              if (status == 'accepted' || status == 'rejected' || status == 'cancelled') {
                 notifications.add({
                   'volunteerName': assignment['volunteerName'] ?? 'Seseorang',
                   'role': assignment['role'] ?? 'Petugas',
@@ -91,6 +91,13 @@ class AdminNotificationScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  // leading: CircleAvatar(
+                  //   backgroundColor: isAccepted ? Colors.green[50] : Colors.red[50],
+                  //   child: Icon(
+                  //     isAccepted ? Icons.check_circle : Icons.cancel,
+                  //     color: isAccepted ? Colors.green : Colors.red,
+                  //   ),
+                  // ),
                   leading: CircleAvatar(
                     backgroundColor: isAccepted ? Colors.green[50] : Colors.red[50],
                     child: Icon(
@@ -98,17 +105,26 @@ class AdminNotificationScreen extends StatelessWidget {
                       color: isAccepted ? Colors.green : Colors.red,
                     ),
                   ),
+
                   title: RichText(
                     text: TextSpan(
                       style: const TextStyle(color: Colors.black87, fontSize: 14, height: 1.4),
                       children: [
                         TextSpan(text: notif['volunteerName'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                        TextSpan(text: isAccepted ? " telah menerima " : " telah menolak "),
-                        const TextSpan(text: "tugas sebagai "),
-                        TextSpan(text: notif['role'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                        const TextSpan(text: " untuk "),
-                        TextSpan(text: notif['ministry'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                        const TextSpan(text: "."),
+                        if (notif['status'] == 'cancelled') ...[
+                          const TextSpan(text: " cancel jadwal pelayanan ibadah "),
+                          TextSpan(text: notif['ministry'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const TextSpan(text: " pada "),
+                          TextSpan(text: DateFormat('dd MMM yyyy').format(notif['eventDate']), style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const TextSpan(text: "."),
+                        ] else ...[
+                          TextSpan(text: notif['status'] == 'accepted' ? " telah menerima " : " telah menolak "),
+                          const TextSpan(text: "tugas sebagai "),
+                          TextSpan(text: notif['role'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const TextSpan(text: " untuk "),
+                          TextSpan(text: notif['ministry'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const TextSpan(text: "."),
+                        ]
                       ],
                     ),
                   ),
