@@ -6,6 +6,7 @@ import 'create_service_screen.dart';
 import 'package:intl/intl.dart';
 import 'admin_manage_staff_screen.dart';
 import 'staff_volunteer_screen.dart';
+import 'admin_services_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -144,85 +145,85 @@ class _MainScreenState extends State<MainScreen> {
 //   }
 // }
 
-class AdminServicesScreen extends StatelessWidget {
-  const AdminServicesScreen({super.key});
+// class AdminServicesScreen extends StatelessWidget {
+//   const AdminServicesScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Jadwal Kebaktian"),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        foregroundColor: Colors.black,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Navigate to the Create Page
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateServiceScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('service_events')
-            .orderBy('date', descending: false) // Upcoming events first
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: const Text("Jadwal Kebaktian"),
+//         backgroundColor: Colors.white,
+//         elevation: 1,
+//         foregroundColor: Colors.black,
+//       ),
+//       floatingActionButton: FloatingActionButton(
+//         onPressed: () {
+//           // Navigate to the Create Page
+//           Navigator.push(
+//             context,
+//             MaterialPageRoute(builder: (context) => const CreateServiceScreen()),
+//           );
+//         },
+//         child: const Icon(Icons.add),
+//       ),
+//       body: StreamBuilder<QuerySnapshot>(
+//         stream: FirebaseFirestore.instance
+//             .collection('service_events')
+//             .orderBy('date', descending: false) // Upcoming events first
+//             .snapshots(),
+//         builder: (context, snapshot) {
+//           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           
-          var docs = snapshot.data!.docs;
-          if (docs.isEmpty) return const Center(child: Text("Belum ada jadwal."));
+//           var docs = snapshot.data!.docs;
+//           if (docs.isEmpty) return const Center(child: Text("Belum ada jadwal."));
 
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              var data = docs[index].data() as Map<String, dynamic>;
-              DateTime date = (data['date'] as Timestamp).toDate();
+//           return ListView.builder(
+//             itemCount: docs.length,
+//             itemBuilder: (context, index) {
+//               var data = docs[index].data() as Map<String, dynamic>;
+//               DateTime date = (data['date'] as Timestamp).toDate();
               
-              // Count how many people assigned
-              List assignments = data['assignments'] ?? [];
+//               // Count how many people assigned
+//               List assignments = data['assignments'] ?? [];
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[100],
-                      borderRadius: BorderRadius.circular(8)
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(DateFormat('MMM').format(date), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                        Text(DateFormat('dd').format(date), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                      ],
-                    ),
-                  ),
-                  title: Text(data['ministry'] ?? 'Kebaktian'),
-                  subtitle: Text("${assignments.length} Petugas • ${data['description'] ?? ''}"),
-                  trailing: const Icon(Icons.edit, color: Colors.grey), // Changed icon to edit
+//               return Card(
+//                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+//                 child: ListTile(
+//                   leading: Container(
+//                     padding: const EdgeInsets.all(8),
+//                     decoration: BoxDecoration(
+//                       color: Colors.blue[100],
+//                       borderRadius: BorderRadius.circular(8)
+//                     ),
+//                     child: Column(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         Text(DateFormat('MMM').format(date), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+//                         Text(DateFormat('dd').format(date), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+//                       ],
+//                     ),
+//                   ),
+//                   title: Text(data['ministry'] ?? 'Kebaktian'),
+//                   subtitle: Text("${assignments.length} Petugas • ${data['description'] ?? ''}"),
+//                   trailing: const Icon(Icons.edit, color: Colors.grey), // Changed icon to edit
                   
-                  // NEW: Pass the document to open Edit Mode!
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CreateServiceScreen(existingService: docs[index]),
-                      ),
-                    );
-                  },
+//                   // NEW: Pass the document to open Edit Mode!
+//                   onTap: () {
+//                     Navigator.push(
+//                       context,
+//                       MaterialPageRoute(
+//                         builder: (context) => CreateServiceScreen(existingService: docs[index]),
+//                       ),
+//                     );
+//                   },
                   
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
+//                 ),
+//               );
+//             },
+//           );
+//         },
+//       ),
+//     );
+//   }
+// }

@@ -124,8 +124,12 @@ class _AdminManageStaffScreenState extends State<AdminManageStaffScreen> {
 
               var allDocs = snapshot.data!.docs;
               var displayDocs = allDocs.where((doc) {
-                if (_selectedUserId == null) return true; 
                 var data = doc.data() as Map<String, dynamic>;
+                
+                // NEW: Hide finished services from this view
+                if (data['is_finished'] == true) return false;
+
+                if (_selectedUserId == null) return true; 
                 List assignments = data['assignments'] ?? [];
                 return assignments.any((a) => a['volunteerId'] == _selectedUserId);
               }).toList();
