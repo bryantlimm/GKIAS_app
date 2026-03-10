@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'admin_manage_staff_screen.dart';
 import 'staff_volunteer_screen.dart';
 import 'admin_services_screen.dart';
+import 'profile_screen.dart'; // ADD THIS IMPORT
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -59,7 +60,7 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
 
-    // 1. Define the possible screens
+    // Define the possible screens
     final List<Widget> screens = [];
     final List<BottomNavigationBarItem> navItems = [];
 
@@ -72,7 +73,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
 
-    // 2. Add tabs based on role
+    // Add tabs based on role
     if (_userRole == 'volunteer') {
       screens.add(const StaffVolunteerScreen());
       navItems.add(
@@ -82,31 +83,35 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
     } else if (_userRole == 'admin') {
-  // Admin Menu 1: Create/Manage Specific Services
-  screens.add(const AdminServicesScreen());
-  navItems.add(
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.event_note_rounded),
-      label: 'Kebaktian', // Services
-    ),
-  );
+      // Admin Menu 1: Create/Manage Specific Services
+      screens.add(const AdminServicesScreen());
+      navItems.add(
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.event_note_rounded),
+          label: 'Kebaktian',
+        ),
+      );
 
-  // Admin Menu 2: Manage Staff/Volunteers
-  screens.add(const AdminManageStaffScreen());
-  navItems.add(
-    const BottomNavigationBarItem(
-      icon: Icon(Icons.person_add_alt_1_rounded),
-      label: 'Permintaan',
-    ),
-  );
-}
-
-    // 3. If there's only 1 item (Regular User), don't show the BottomNavBar
-    if (navItems.length < 2) {
-      return screens[0]; // Just return the HomeScreen directly
+      // Admin Menu 2: Manage Staff/Volunteers (now only Permintaan)
+      screens.add(const AdminManageStaffScreen());
+      navItems.add(
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.person_add_alt_1_rounded),
+          label: 'Permintaan',
+        ),
+      );
     }
 
-    // 4. Return the Scaffold with the BottomNavBar for Volunteers/Admins
+    // EVERYONE gets Profile screen (NEW)
+    screens.add(const ProfileScreen());
+    navItems.add(
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.person_rounded),
+        label: 'Profil',
+      ),
+    );
+
+    // Return the Scaffold with the BottomNavBar
     return Scaffold(
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -115,7 +120,7 @@ class _MainScreenState extends State<MainScreen> {
         selectedItemColor: const Color(0xFF1E3A8A), // gkiBlue
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed, // Keeps all labels visible
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
