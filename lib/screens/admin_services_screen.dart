@@ -6,6 +6,39 @@ import 'create_service_screen.dart';
 class AdminServicesScreen extends StatelessWidget {
   const AdminServicesScreen({super.key});
 
+  // --- FUNCTION: DELETE SERVICE ---
+  Future<void> _deleteService(BuildContext context, DocumentSnapshot doc) async {
+    var data = doc.data() as Map;
+    bool confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Hapus Jadwal"),
+        content: Text("Anda yakin ingin menghapus jadwal '${data['ministry'] ?? 'Kebaktian'}' pada ${DateFormat('d MMM yyyy').format((data['date'] as Timestamp).toDate())}?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Batal")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Hapus"),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (confirm) {
+      try {
+        await doc.reference.delete();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Jadwal berhasil dihapus!")));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal menghapus: $e"), backgroundColor: Colors.red));
+        }
+      }
+    }
+  }
+
   // --- FUNCTION: ADMIN EDIT FINISHED SERVICE ---
   Future<void> _editFinishedService(BuildContext context, DocumentSnapshot doc) async {
     var data = doc.data() as Map;
@@ -175,6 +208,13 @@ class AdminServicesScreen extends StatelessWidget {
                                         icon: const Icon(Icons.edit, size: 18),
                                         label: const Text("Edit Jadwal"),
                                       ),
+                                      const SizedBox(width: 8),
+                                      TextButton.icon(
+                                        onPressed: () => _deleteService(context, doc),
+                                        icon: const Icon(Icons.delete, size: 18),
+                                        label: const Text("Hapus"),
+                                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -259,8 +299,37 @@ class AdminServicesScreen extends StatelessWidget {
                                   Text("Persembahan: Rp ${NumberFormat('#,###', 'id_ID').format(data['offering_amount'] ?? 0)}"),
                                 ],
                               ),
-                              trailing: const Icon(Icons.fact_check, color: Colors.green),
-                              onTap: () => _editFinishedService(context, doc),
+                              trailing: PopupMenuButton<String>(
+                                onSelected: (value) {
+                                  if (value == 'edit') {
+                                    _editFinishedService(context, doc);
+                                  } else if (value == 'delete') {
+                                    _deleteService(context, doc);
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) => [
+                                  const PopupMenuItem<String>(
+                                    value: 'edit',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.edit, size: 18, color: Colors.blue),
+                                        SizedBox(width: 8),
+                                        Text('Edit'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem<String>(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete, size: 18, color: Colors.red),
+                                        SizedBox(width: 8),
+                                        Text('Hapus'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },

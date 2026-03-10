@@ -92,12 +92,12 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
 
-      // Admin Menu 2: Manage Staff/Volunteers (now only Permintaan)
+      // Admin Menu 2: Manage Staff/Volunteers
       screens.add(const AdminManageStaffScreen());
       navItems.add(
         const BottomNavigationBarItem(
           icon: Icon(Icons.person_add_alt_1_rounded),
-          label: 'Permintaan',
+          label: 'Users',
         ),
       );
     }
@@ -107,7 +107,7 @@ class _MainScreenState extends State<MainScreen> {
     navItems.add(
       const BottomNavigationBarItem(
         icon: Icon(Icons.person_rounded),
-        label: 'Profil',
+        label: 'Profile',
       ),
     );
 
