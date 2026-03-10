@@ -82,24 +82,24 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
     } else if (_userRole == 'admin') {
-      // Admin Menu 1: Create/Manage Specific Services
-      screens.add(const AdminServicesScreen());
-      navItems.add(
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.event_note_rounded),
-          label: 'Kebaktian', // Services
-        ),
-      );
+  // Admin Menu 1: Create/Manage Specific Services
+  screens.add(const AdminServicesScreen());
+  navItems.add(
+    const BottomNavigationBarItem(
+      icon: Icon(Icons.event_note_rounded),
+      label: 'Kebaktian', // Services
+    ),
+  );
 
-      // Admin Menu 2: Manage Staff/Volunteers
-      screens.add(const AdminManageStaffScreen());
-      navItems.add(
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.people_alt_rounded),
-          label: 'Pelayan',
-        ),
-      );
-    }
+  // Admin Menu 2: Manage Staff/Volunteers
+  screens.add(const AdminManageStaffScreen());
+  navItems.add(
+    const BottomNavigationBarItem(
+      icon: Icon(Icons.person_add_alt_1_rounded),
+      label: 'Permintaan',
+    ),
+  );
+}
 
     // 3. If there's only 1 item (Regular User), don't show the BottomNavBar
     if (navItems.length < 2) {

@@ -8,8 +8,8 @@ class AdminServicesScreen extends StatelessWidget {
 
   // --- FUNCTION: ADMIN EDIT FINISHED SERVICE ---
   Future<void> _editFinishedService(BuildContext context, DocumentSnapshot doc) async {
-    var data = doc.data() as Map<String, dynamic>;
-    
+    var data = doc.data() as Map;
+
     TextEditingController attCountCtrl = TextEditingController(text: data['attendance_count']?.toString() ?? '0');
     TextEditingController attNotesCtrl = TextEditingController(text: data['attendance_notes'] ?? '');
     TextEditingController offAmountCtrl = TextEditingController(text: data['offering_amount']?.toString() ?? '0');
@@ -27,7 +27,7 @@ class AdminServicesScreen extends StatelessWidget {
               Text(data['ministry'] ?? 'Kebaktian', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               Text(DateFormat('EEEE, d MMM yyyy').format((data['date'] as Timestamp).toDate()), style: const TextStyle(color: Colors.grey)),
               const Divider(height: 24),
-              
+
               const Text("Kehadiran", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
               const SizedBox(height: 8),
               TextField(
@@ -40,7 +40,7 @@ class AdminServicesScreen extends StatelessWidget {
                 controller: attNotesCtrl,
                 decoration: const InputDecoration(labelText: "Catatan Kehadiran", border: OutlineInputBorder(), isDense: true),
               ),
-              
+
               const SizedBox(height: 16),
               const Text("Persembahan", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
               const SizedBox(height: 8),
@@ -110,107 +110,161 @@ class AdminServicesScreen extends StatelessWidget {
           },
           child: const Icon(Icons.add),
         ),
-        body: StreamBuilder<QuerySnapshot>(
-          // Fetch ALL descending so we get a single source of truth
+        body: StreamBuilder(
           stream: FirebaseFirestore.instance
               .collection('service_events')
-              .orderBy('date', descending: true) 
+              .orderBy('date', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
             if (!snapshot.hasData) return const Center(child: Text("Gagal memuat data."));
-            
+
             var allDocs = snapshot.data!.docs;
 
             // Split and Sort the data in memory
-            var upcomingDocs = allDocs.where((doc) => (doc.data() as Map<String, dynamic>)['is_finished'] != true).toList();
+            var upcomingDocs = allDocs.where((doc) => (doc.data() as Map)['is_finished'] != true).toList();
             // Sort upcoming ascending (nearest events first)
             upcomingDocs.sort((a, b) => (a.data() as Map)['date'].compareTo((b.data() as Map)['date']));
 
-            var finishedDocs = allDocs.where((doc) => (doc.data() as Map<String, dynamic>)['is_finished'] == true).toList();
+            var finishedDocs = allDocs.where((doc) => (doc.data() as Map)['is_finished'] == true).toList();
             // Finished is already sorted descending (newest finished first) by the stream!
 
             return TabBarView(
               children: [
                 // ================= TAB 1: UPCOMING =================
-                upcomingDocs.isEmpty 
-                  ? const Center(child: Text("Belum ada jadwal ibadah mendatang."))
-                  : ListView.builder(
-                      itemCount: upcomingDocs.length,
-                      itemBuilder: (context, index) {
-                        var doc = upcomingDocs[index];
-                        var data = doc.data() as Map<String, dynamic>;
-                        DateTime date = (data['date'] as Timestamp).toDate();
-                        List assignments = data['assignments'] ?? [];
+                upcomingDocs.isEmpty
+                    ? const Center(child: Text("Belum ada jadwal ibadah mendatang."))
+                    : ListView.builder(
+                        itemCount: upcomingDocs.length,
+                        itemBuilder: (context, index) {
+                          var doc = upcomingDocs[index];
+                          var data = doc.data() as Map;
+                          DateTime date = (data['date'] as Timestamp).toDate();
+                          List assignments = data['assignments'] ?? [];
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(8)),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(DateFormat('MMM').format(date), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
-                                  Text(DateFormat('dd').format(date), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue)),
-                                ],
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: ExpansionTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(8)),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(DateFormat('MMM').format(date), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
+                                    Text(DateFormat('dd').format(date), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue)),
+                                  ],
+                                ),
                               ),
-                            ),
-                            title: Text(data['ministry'] ?? 'Kebaktian', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text("${assignments.length} Petugas • ${data['description'] ?? ''}"),
-                            trailing: const Icon(Icons.edit, color: Colors.blueGrey),
-                            onTap: () {
-                              // Open Edit Mode
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => CreateServiceScreen(existingService: doc)),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-
-                // ================= TAB 2: FINISHED =================
-                finishedDocs.isEmpty 
-                  ? const Center(child: Text("Belum ada riwayat ibadah selesai."))
-                  : ListView.builder(
-                      itemCount: finishedDocs.length,
-                      itemBuilder: (context, index) {
-                        var doc = finishedDocs[index];
-                        var data = doc.data() as Map<String, dynamic>;
-                        DateTime date = (data['date'] as Timestamp).toDate();
-
-                        return Card(
-                          color: Colors.grey[50],
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(DateFormat('MMM').format(date), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey[800])),
-                                  Text(DateFormat('dd').format(date), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.grey[800])),
-                                ],
-                              ),
-                            ),
-                            title: Text(data['ministry'] ?? 'Kebaktian', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              title: Text(data['ministry'] ?? 'Kebaktian', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text("${assignments.length} Petugas • ${data['description'] ?? ''}"),
                               children: [
-                                Text("Kehadiran: ${data['attendance_count'] ?? 0} jiwa"),
-                                Text("Persembahan: Rp ${NumberFormat('#,###', 'id_ID').format(data['offering_amount'] ?? 0)}"),
+                                // Edit button row
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // bottom: 8
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (context) => CreateServiceScreen(existingService: doc)),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.edit, size: 18),
+                                        label: const Text("Edit Jadwal"),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Divider(height: 1),
+                                // Volunteer assignments list
+                                assignments.isEmpty
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(16.0),
+                                        child: Text("Belum ada petugas yang di-assign.", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
+                                      )
+                                    : Column(
+                                        children: assignments.map<Widget>((a) {
+                                          String status = a['status'] ?? 'pending';
+                                          Color statusColor = status == 'accepted' 
+                                              ? Colors.green 
+                                              : (status == 'rejected' ? Colors.red : Colors.orange);
+                                          IconData statusIcon = status == 'accepted' 
+                                              ? Icons.check_circle 
+                                              : (status == 'rejected' ? Icons.cancel : Icons.pending);
+
+                                          return ListTile(
+                                            dense: true,
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                                            leading: CircleAvatar(
+                                              radius: 16,
+                                              backgroundColor: statusColor.withOpacity(0.1),
+                                              child: Icon(statusIcon, size: 16, color: statusColor),
+                                            ),
+                                            title: Text(a['volunteerName'] ?? 'Unknown', style: const TextStyle(fontSize: 14)),
+                                            subtitle: Text("Tugas: ${a['role']}", style: const TextStyle(fontSize: 12)),
+                                            trailing: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: statusColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                status == 'accepted' ? 'DITERIMA' : (status == 'rejected' ? 'DITOLAK' : 'MENUNGGU'),
+                                                style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 11),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                const SizedBox(height: 8),
                               ],
                             ),
-                            trailing: const Icon(Icons.fact_check, color: Colors.green),
-                            onTap: () => _editFinishedService(context, doc), // Open Admin Edit Popup
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
+
+                // ================= TAB 2: FINISHED ===============
+                finishedDocs.isEmpty
+                    ? const Center(child: Text("Belum ada riwayat ibadah selesai."))
+                    : ListView.builder(
+                        itemCount: finishedDocs.length,
+                        itemBuilder: (context, index) {
+                          var doc = finishedDocs[index];
+                          var data = doc.data() as Map;
+                          DateTime date = (data['date'] as Timestamp).toDate();
+
+                          return Card(
+                            color: Colors.grey[50],
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(DateFormat('MMM').format(date), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey[800])),
+                                    Text(DateFormat('dd').format(date), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.grey[800])),
+                                  ],
+                                ),
+                              ),
+                              title: Text(data['ministry'] ?? 'Kebaktian', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Kehadiran: ${data['attendance_count'] ?? 0} jiwa"),
+                                  Text("Persembahan: Rp ${NumberFormat('#,###', 'id_ID').format(data['offering_amount'] ?? 0)}"),
+                                ],
+                              ),
+                              trailing: const Icon(Icons.fact_check, color: Colors.green),
+                              onTap: () => _editFinishedService(context, doc),
+                            ),
+                          );
+                        },
+                      ),
               ],
             );
           },
