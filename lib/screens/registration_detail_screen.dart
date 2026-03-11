@@ -133,6 +133,7 @@ class _RegistrationDetailScreenState extends State<RegistrationDetailScreen> {
         'eventId': widget.event.id,
         'eventTitle': eventData['title'],
         'registeredBy': user.uid,
+        'userId': user.uid,
         'name': _nameController.text.trim(),
         'contact': _contactController.text.trim(),
         'description': _descriptionController.text.trim(),
@@ -141,9 +142,9 @@ class _RegistrationDetailScreenState extends State<RegistrationDetailScreen> {
       });
 
       // Update event count
-      await widget.event.reference.update({
-        'currentRegistrants': FieldValue.increment(1),
-      });
+      // await widget.event.reference.update({
+      //   'currentRegistrants': FieldValue.increment(1),
+      // });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -279,7 +280,7 @@ class _RegistrationDetailScreenState extends State<RegistrationDetailScreen> {
                         DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(deadline) +
                         (isDeadlinePassed ? " (BERAKHIR)" : ""),
                         isDeadlinePassed ? Colors.red : null),
-                    _buildInfoRow(Icons.group, "Kapasitas", "$current / $capacity orang"),
+                    // _buildInfoRow(Icons.group, "Kapasitas", "$current / $capacity orang"), // bikin error pusing guweh
                     if (isFull)
                       const Text(
                         "KUOTA PENUH",

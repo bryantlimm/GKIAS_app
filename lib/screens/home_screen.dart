@@ -408,7 +408,7 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
-  
+
   Widget _buildMyEventsTab(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const Center(child: Text("Silakan login"));
@@ -416,6 +416,7 @@ class HomeScreen extends StatelessWidget {
     return StreamBuilder(
       stream: FirebaseFirestore.instance
           .collection('registrations')
+          .where('userId', isEqualTo: user.uid)
           .where('registeredBy', isEqualTo: user.uid)
           .orderBy('registeredAt', descending: true)
           .snapshots(),
