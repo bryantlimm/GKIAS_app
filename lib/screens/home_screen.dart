@@ -403,13 +403,27 @@ class _MyEventsTab extends StatelessWidget {
     }
 
     return StreamBuilder<QuerySnapshot>(
+      // Single where() on userId — no composite index needed.
+      // The original had .where('registeredBy') + .orderBy('registeredAt') which
+      // requires a composite Firestore index. Without it, Firestore silently returns
+      // zero results (or throws an error Flutter swallows). Sorting client-side instead.
       stream: FirebaseFirestore.instance
           .collection('registrations')
           .where('userId', isEqualTo: user.uid)
-          .where('registeredBy', isEqualTo: user.uid)
-          .orderBy('registeredAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: _primary));
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text('Error: \${snapshot.error}',
+                  style: const TextStyle(color: Color(0xFFDC2626), fontSize: 12)),
+            ),
+          );
+        }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(
             child: Column(
@@ -423,11 +437,22 @@ class _MyEventsTab extends StatelessWidget {
           );
         }
 
+        // Sort client-side by registeredAt descending — no composite index needed
+        final docs = [...snapshot.data!.docs];
+        docs.sort((a, b) {
+          final aTs = (a.data() as Map<String, dynamic>)['registeredAt'] as Timestamp?;
+          final bTs = (b.data() as Map<String, dynamic>)['registeredAt'] as Timestamp?;
+          if (aTs == null && bTs == null) return 0;
+          if (aTs == null) return 1;
+          if (bTs == null) return -1;
+          return bTs.compareTo(aTs);
+        });
+
         return ListView.builder(
           padding: const EdgeInsets.all(12),
-          itemCount: snapshot.data!.docs.length,
+          itemCount: docs.length,
           itemBuilder: (context, index) {
-            final reg = snapshot.data!.docs[index];
+            final reg = docs[index];
             final regData = reg.data() as Map<String, dynamic>;
 
             return FutureBuilder<DocumentSnapshot>(
