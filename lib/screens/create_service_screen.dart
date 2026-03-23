@@ -175,11 +175,17 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
       print('Assignments to save: $assignmentsWithStatus');
 
       // Prepare the data payload
+      final acceptedVolunteerIds = assignmentsWithStatus
+          .where((a) => (a['status'] as String?) == 'accepted')
+          .map((a) => a['volunteerId'] as String)
+          .toList();
+ 
       final serviceData = <String, dynamic>{
         'date': Timestamp.fromDate(_selectedDate!),
-        'ministry': _selectedMinistry, 
+        'ministry': _selectedMinistry,
         'description': _descriptionController.text,
-        'assignments': assignmentsWithStatus, 
+        'assignments': assignmentsWithStatus,
+        'acceptedVolunteerIds': acceptedVolunteerIds,
       };
 
       // NEW: Check if we are Updating or Creating
