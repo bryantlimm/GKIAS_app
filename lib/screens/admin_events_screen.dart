@@ -96,6 +96,7 @@ class AdminEventsScreen extends StatelessWidget {
   }
 
   // ── Registrants bottom sheet ──────────────────────────────────────────────
+// ── Registrants bottom sheet ──────────────────────────────────────────────
   void _showRegistrants(BuildContext context, DocumentSnapshot eventDoc) {
     showModalBottomSheet(
       context: context,
@@ -151,32 +152,60 @@ class AdminEventsScreen extends StatelessWidget {
                       stream: FirebaseFirestore.instance
                           .collection('registrations')
                           .where('eventId', isEqualTo: eventDoc.id)
-                          .orderBy('registeredAt', descending: true)
+                          // ✅ Removed .orderBy('registeredAt') — that requires a composite
+                          //    index in Firestore and causes the stream to hang without one.
+                          //    We sort client-side below instead.
                           .snapshots(),
                       builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                'Terjadi kesalahan:\n${snapshot.error}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: _errorText, fontSize: 13),
+                              ),
+                            ),
+                          );
+                        }
+
                         if (!snapshot.hasData) {
                           return const Center(child: CircularProgressIndicator(color: _primary));
                         }
+
                         if (snapshot.data!.docs.isEmpty) {
-                          return Center(
+                          return const Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
+                              children: [
                                 Icon(Icons.people_outline, size: 40, color: _textMuted),
                                 SizedBox(height: 8),
-                                Text('Belum ada registran.', style: TextStyle(color: _textMuted, fontSize: 14)),
+                                Text('Belum ada registran.',
+                                    style: TextStyle(color: _textMuted, fontSize: 14)),
                               ],
                             ),
                           );
                         }
 
+                        // ✅ Sort client-side by registeredAt descending
+                        final docs = snapshot.data!.docs.toList()
+                          ..sort((a, b) {
+                            final aData = a.data() as Map<String, dynamic>;
+                            final bData = b.data() as Map<String, dynamic>;
+                            final aTime = aData['registeredAt'] as Timestamp?;
+                            final bTime = bData['registeredAt'] as Timestamp?;
+                            if (aTime == null || bTime == null) return 0;
+                            return bTime.compareTo(aTime);
+                          });
+
                         return ListView.separated(
                           controller: scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          itemCount: snapshot.data!.docs.length,
+                          itemCount: docs.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 8),
                           itemBuilder: (context, index) {
-                            final reg = snapshot.data!.docs[index];
+                            final reg = docs[index];
                             final regData = reg.data() as Map<String, dynamic>;
                             final initials = (regData['name'] ?? 'U')[0].toUpperCase();
 
@@ -189,16 +218,20 @@ class AdminEventsScreen extends StatelessWidget {
                               child: ListTile(
                                 leading: CircleAvatar(
                                   backgroundColor: _primary,
-                                  child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                                  child: Text(initials,
+                                      style: const TextStyle(
+                                          color: Colors.white, fontWeight: FontWeight.w700)),
                                 ),
                                 title: Text(regData['name'] ?? 'Unknown',
-                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _textMain)),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700, fontSize: 14, color: _textMain)),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('Kontak: ${regData['contact'] ?? '-'}',
                                         style: const TextStyle(fontSize: 12, color: _textSub)),
-                                    if (regData['description'] != null && (regData['description'] as String).isNotEmpty)
+                                    if (regData['description'] != null &&
+                                        (regData['description'] as String).isNotEmpty)
                                       Text('Keterangan: ${regData['description']}',
                                           style: const TextStyle(fontSize: 12, color: _textSub)),
                                     if (regData['registeredAt'] != null)
@@ -211,12 +244,15 @@ class AdminEventsScreen extends StatelessWidget {
                                 ),
                                 isThreeLine: true,
                                 trailing: IconButton(
-                                  icon: const Icon(Icons.delete_outline_rounded, color: _errorText, size: 20),
+                                  icon: const Icon(Icons.delete_outline_rounded,
+                                      color: _errorText, size: 20),
                                   onPressed: () async {
                                     final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (_) => _ConfirmDeleteDialog(name: regData['name'] ?? ''),
-                                    ) ?? false;
+                                          context: context,
+                                          builder: (_) =>
+                                              _ConfirmDeleteDialog(name: regData['name'] ?? ''),
+                                        ) ??
+                                        false;
                                     if (confirm) {
                                       await reg.reference.delete();
                                       await eventDoc.reference.update({
@@ -229,10 +265,15 @@ class AdminEventsScreen extends StatelessWidget {
                                     ? () => showDialog(
                                           context: context,
                                           builder: (_) => AlertDialog(
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(14)),
                                             title: const Text('Dokumen Registran'),
                                             content: Image.network(regData['documentUrl']),
-                                            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup'))],
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () => Navigator.pop(context),
+                                                  child: const Text('Tutup'))
+                                            ],
                                           ),
                                         )
                                     : null,
@@ -426,10 +467,6 @@ class AdminEventsScreen extends StatelessWidget {
 
                 final now = DateTime.now();
 
-                // ── FIX 1: Upcoming ──────────────────────────────────────
-                // Service events (kebaktian): show if NOT marked isFinished,
-                //   regardless of whether the date has passed.
-                // Registration events: show if date is today or future.
                 final upcomingDocs = allDocs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
                   final isFinished = data['is_finished'] == true;
@@ -450,9 +487,6 @@ class AdminEventsScreen extends StatelessWidget {
                     return dateA.compareTo(dateB); // ascending for upcoming
                   });
 
-                // ── FIX 2: Finished ──────────────────────────────────────
-                // Service events: show if marked isFinished.
-                // Registration events: show if event date has passed.
                 final finishedDocs = allDocs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
                   final isFinished = data['is_finished'] == true;
@@ -504,6 +538,7 @@ class AdminEventsScreen extends StatelessWidget {
       ),
     );
   }
+
 }
 
 // ─── Events list widget ───────────────────────────────────────────────────────

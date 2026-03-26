@@ -5,12 +5,51 @@ import 'package:intl/intl.dart';
 class AdminNotificationScreen extends StatelessWidget {
   const AdminNotificationScreen({super.key});
 
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'accepted':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      case 'cancelled':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status) {
+      case 'accepted':
+        return Icons.check_circle;
+      case 'rejected':
+        return Icons.cancel;
+      case 'cancelled':
+        return Icons.event_busy;
+      default:
+        return Icons.schedule;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'accepted':
+        return 'Diterima';
+      case 'rejected':
+        return 'Ditolak';
+      case 'cancelled':
+        return 'Dibatalkan';
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Target date: 30 days ago from today
     final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
         title: const Text("Notifikasi Respons"),
         backgroundColor: Colors.white,
@@ -18,10 +57,10 @@ class AdminNotificationScreen extends StatelessWidget {
         elevation: 1,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Fetch events from 30 days ago up to the future
         stream: FirebaseFirestore.instance
             .collection('service_events')
-            .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(thirtyDaysAgo))
+            .where('date',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(thirtyDaysAgo))
             .orderBy('date', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
@@ -29,24 +68,39 @@ class AdminNotificationScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Terjadi kesalahan:\n${snapshot.error}",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.red[700]),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
-          var docs = snapshot.data?.docs ?? [];
-          List<Map<String, dynamic>> notifications = [];
+          final docs = snapshot.data?.docs ?? [];
+          final List<Map<String, dynamic>> notifications = [];
 
-          // Flatten the assignments into a single list of "notifications"
           for (var doc in docs) {
-            var data = doc.data() as Map<String, dynamic>;
-            List assignments = data['assignments'] ?? [];
-            DateTime eventDate = (data['date'] as Timestamp).toDate();
-            String ministry = data['ministry'] ?? 'Pelayanan';
+            final data = doc.data() as Map<String, dynamic>;
+            final List assignments = data['assignments'] ?? [];
+            final DateTime eventDate = (data['date'] as Timestamp).toDate();
+            final String ministry = data['ministry'] ?? 'Pelayanan';
 
             for (var assignment in assignments) {
-              String status = assignment['status'] ?? 'pending';
-              
-              // Only grab people who have responded
-              if (status == 'accepted' || status == 'rejected' || status == 'cancelled') {
+              final String status = assignment['status'] ?? 'pending';
+              if (status == 'accepted' ||
+                  status == 'rejected' ||
+                  status == 'cancelled') {
                 notifications.add({
                   'volunteerName': assignment['volunteerName'] ?? 'Seseorang',
                   'role': assignment['role'] ?? 'Petugas',
@@ -59,87 +113,166 @@ class AdminNotificationScreen extends StatelessWidget {
           }
 
           if (notifications.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_off, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
+                  Icon(Icons.notifications_none,
+                      size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 12),
                   Text(
                     "Belum ada respons pelayanan\ndalam 30 hari terakhir.",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),
             );
           }
 
-          // Sort the notifications by the Event Date so the newest/upcoming are at the top
-          notifications.sort((a, b) => b['eventDate'].compareTo(a['eventDate']));
+          notifications
+              .sort((a, b) => b['eventDate'].compareTo(a['eventDate']));
 
           return ListView.builder(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             itemCount: notifications.length,
             itemBuilder: (context, index) {
-              var notif = notifications[index];
-              bool isAccepted = notif['status'] == 'accepted';
+              final notif = notifications[index];
+              final String status = notif['status'];
+              final Color sColor = _statusColor(status);
+              final DateTime eventDate = notif['eventDate'];
 
-              return Card(
-                elevation: 1,
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  // leading: CircleAvatar(
-                  //   backgroundColor: isAccepted ? Colors.green[50] : Colors.red[50],
-                  //   child: Icon(
-                  //     isAccepted ? Icons.check_circle : Icons.cancel,
-                  //     color: isAccepted ? Colors.green : Colors.red,
-                  //   ),
-                  // ),
-                  leading: CircleAvatar(
-                    backgroundColor: isAccepted ? Colors.green[50] : Colors.red[50],
-                    child: Icon(
-                      isAccepted ? Icons.check_circle : Icons.cancel,
-                      color: isAccepted ? Colors.green : Colors.red,
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-
-                  title: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(color: Colors.black87, fontSize: 14, height: 1.4),
-                      children: [
-                        TextSpan(text: notif['volunteerName'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                        if (notif['status'] == 'cancelled') ...[
-                          const TextSpan(text: " cancel jadwal pelayanan ibadah "),
-                          TextSpan(text: notif['ministry'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const TextSpan(text: " pada "),
-                          TextSpan(text: DateFormat('dd MMM yyyy').format(notif['eventDate']), style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const TextSpan(text: "."),
-                        ] else ...[
-                          TextSpan(text: notif['status'] == 'accepted' ? " telah menerima " : " telah menolak "),
-                          const TextSpan(text: "tugas sebagai "),
-                          TextSpan(text: notif['role'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const TextSpan(text: " untuk "),
-                          TextSpan(text: notif['ministry'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const TextSpan(text: "."),
-                        ]
-                      ],
-                    ),
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.event, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                          DateFormat('EEEE, d MMM yyyy', 'id_ID').format(notif['eventDate']),
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Avatar
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: sColor.withOpacity(0.12),
+                        child: Icon(
+                          _statusIcon(status),
+                          color: sColor,
+                          size: 20,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Narrative text
+                            RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                  height: 1.4,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: notif['volunteerName'],
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  if (status == 'cancelled') ...[
+                                    const TextSpan(
+                                        text:
+                                            " membatalkan jadwal pelayanan "),
+                                    TextSpan(
+                                      text: notif['ministry'],
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const TextSpan(text: " pada "),
+                                    TextSpan(
+                                      text: DateFormat('dd MMM yyyy')
+                                          .format(eventDate),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const TextSpan(text: "."),
+                                  ] else ...[
+                                    TextSpan(
+                                      text: status == 'accepted'
+                                          ? " menerima "
+                                          : " menolak ",
+                                    ),
+                                    const TextSpan(text: "tugas sebagai "),
+                                    TextSpan(
+                                      text: notif['role'],
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const TextSpan(text: " untuk "),
+                                    TextSpan(
+                                      text: notif['ministry'],
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const TextSpan(text: "."),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Footer row: date + status badge
+                            Row(
+                              children: [
+                                Icon(Icons.calendar_today_outlined,
+                                    size: 12, color: Colors.grey[400]),
+                                const SizedBox(width: 4),
+                                Text(
+                                  DateFormat('EEEE, d MMM yyyy', 'id_ID')
+                                      .format(eventDate),
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: sColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    _statusLabel(status),
+                                    style: TextStyle(
+                                      color: sColor,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );

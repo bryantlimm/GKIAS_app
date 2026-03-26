@@ -338,7 +338,7 @@ class ProfileScreen extends StatelessWidget {
                                         child: const Text("Batal"),
                                       ),
                                       ElevatedButton(
-                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white,),
                                         onPressed: () => Navigator.pop(context, true),
                                         child: const Text("Keluar"),
                                       ),
