@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'login_screen.dart';
+import '../services/notification_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -328,27 +329,26 @@ class ProfileScreen extends StatelessWidget {
                           onPressed: () async {
                             // Show confirmation for logout
                             bool confirm = await showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text("Keluar"),
-                                    content: const Text("Apakah Anda yakin ingin keluar?"),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context, false),
-                                        child: const Text("Batal"),
-                                      ),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white,),
-                                        onPressed: () => Navigator.pop(context, true),
-                                        child: const Text("Keluar"),
-                                      ),
-                                    ],
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Keluar"),
+                                content: const Text("Apakah Anda yakin ingin keluar?"),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text("Batal"),
                                   ),
-                                ) ??
-                                false;
-
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white,),
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text("Keluar"),
+                                  ),
+                                ],
+                              ),
+                            ) ?? false;
                             if (!confirm) return;
 
+                            await NotificationService.removeToken();
                             await FirebaseAuth.instance.signOut();
                             if (context.mounted) {
                               Navigator.of(context).pushAndRemoveUntil(
@@ -357,6 +357,7 @@ class ProfileScreen extends StatelessWidget {
                               );
                             }
                           },
+                          
                           icon: const Icon(Icons.logout, color: Colors.red),
                           label: const Text("Keluar", style: TextStyle(color: Colors.red)),
                           style: OutlinedButton.styleFrom(

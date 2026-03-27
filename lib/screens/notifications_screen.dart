@@ -82,6 +82,19 @@ class NotificationsScreen extends StatelessWidget {
     }
   }
 
+  static const Color _primary      = Color(0xFF3B5BDB);
+  static const Color _bg           = Color(0xFFF0F4F8);
+  static const Color _cardBg       = Color(0xFFFFFFFF);
+  static const Color _border       = Color(0xFFE8ECF0);
+  static const Color _textMain     = Color(0xFF1E293B);
+  static const Color _textSub      = Color(0xFF64748B);
+  static const Color _textMuted    = Color(0xFF94A3B8);
+  static const Color _successBg    = Color(0xFFF0FDF4);
+  static const Color _successText  = Color(0xFF16A34A);
+  static const Color _errorBg      = Color(0xFFFFF5F5);
+  static const Color _errorText    = Color(0xFFDC2626);
+  static const Color _warnText     = Color(0xFFD97706);
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -91,11 +104,16 @@ class NotificationsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text("Notifikasi & Jadwal"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: const Text("Notifikasi & Jadwal",
+        style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: _textMain,
+            )),
+        backgroundColor: _cardBg,
+        foregroundColor: _textMain,
         elevation: 1,
       ),
       body: StreamBuilder<QuerySnapshot>(
