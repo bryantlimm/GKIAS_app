@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'signup_screen.dart';
 import 'main_screen.dart';
 import '../services/notification_service.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -167,7 +168,25 @@ class _LoginScreenState extends State<LoginScreen> {
                               : Icons.visibility_outlined,
                           onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                            ),
+                            child: const Text(
+                              'Lupa Password?',
+                              style: TextStyle(
+                                color: _primary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
 
                         // ── Login button ───────────────────────────────
                         SizedBox(

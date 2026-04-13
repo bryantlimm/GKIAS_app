@@ -1,7 +1,9 @@
 // signup_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'home_screen.dart';
 import 'main_screen.dart';
 import '../services/notification_service.dart';
@@ -19,6 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _agreedToPrivacyPolicy = false;
   String? _errorMessage;
 
   // ── Brand colors ────────────────────────────────────────────────────────────
@@ -32,9 +35,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
   static const Color _errorBorder = Color(0xFFFECACA);
   static const Color _errorText   = Color(0xFFDC2626);
 
+  Future<void> _launchPrivacyPolicy() async {
+    final uri = Uri.parse('https://www.gkialamsutera.com/privacypolicy');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Future<void> _signUp() async {
     if (_nameController.text.trim().isEmpty) {
       setState(() => _errorMessage = 'Nama lengkap tidak boleh kosong.');
+      return;
+    }
+    if (!_agreedToPrivacyPolicy) {
+      setState(() => _errorMessage = 'Kamu harus menyetujui kebijakan privasi untuk melanjutkan.');
       return;
     }
     setState(() { _isLoading = true; _errorMessage = null; });
@@ -56,6 +70,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         'role': 'regular',
         'createdAt': FieldValue.serverTimestamp(),
         'isStaffRequested': false,
+        'agreedToPrivacyPolicy': true,
+        'privacyPolicyAgreedAt': FieldValue.serverTimestamp(),
       });
 
       await NotificationService.saveToken();
@@ -230,7 +246,48 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           'Gunakan minimal 6 karakter.',
                           style: TextStyle(fontSize: 12, color: _textMuted),
                         ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 20),
+
+                        // ── Privacy Policy Checkbox ────────────────────
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Checkbox(
+                                value: _agreedToPrivacyPolicy,
+                                onChanged: (value) => setState(() => _agreedToPrivacyPolicy = value ?? false),
+                                activeColor: _primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+                                  children: [
+                                    const TextSpan(text: 'Saya telah membaca dan menyetujui '),
+                                    TextSpan(
+                                      text: 'Kebijakan Privasi',
+                                      style: const TextStyle(
+                                        color: _primary,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: _primary,
+                                      ),
+                                      recognizer: TapGestureRecognizer()..onTap = _launchPrivacyPolicy,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
 
                         // ── Submit button ──────────────────────────────
                         SizedBox(
