@@ -48,7 +48,7 @@ class NotificationService {
     await androidPlugin?.createNotificationChannel(_androidChannel);
 
     // 3. Save FCM token
-    await saveToken();
+    // await saveToken();
 
     // 4. Token refresh listener
     _messaging.onTokenRefresh.listen(_saveTokenToFirestore);
@@ -102,11 +102,16 @@ class NotificationService {
   static Future<void> removeToken() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    final token = await _messaging.getToken();
-    if (token == null) return;
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-      'fcmTokens': FieldValue.arrayRemove([token]),
-    });
+    try {
+      final token = await _messaging.getToken();
+      if (token != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'fcmTokens': FieldValue.arrayRemove([token]),
+        });
+      }
+    } catch (_) {
+      // Doc may already be deleted — ignore
+    }
     await _messaging.deleteToken();
   }
 

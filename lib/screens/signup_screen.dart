@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home_screen.dart';
+import 'main_screen.dart';
+import '../services/notification_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -56,9 +58,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         'isStaffRequested': false,
       });
 
+      await NotificationService.saveToken();
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {

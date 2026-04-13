@@ -48,7 +48,7 @@ export const onAssignmentCreated = functions.firestore.onDocumentWritten(
     async (event) => {
       const before = event.data?.before?.data();
       const after  = event.data?.after?.data();
-      
+
       // If 'after' doesn't exist, the document was deleted. Do nothing.
       if (!after) return;
 
@@ -91,7 +91,7 @@ export const onAssignmentCreated = functions.firestore.onDocumentWritten(
         const beforeA = beforeAssignments.find(
             (b: any) => b.volunteerId === afterA.volunteerId && b.role === afterA.role
         );
-        
+
         if (beforeA && beforeA.status !== 'rejected' && afterA.status === 'rejected') {
           const adminsSnap = await db.collection('users')
               .where('role', '==', 'admin').get();
@@ -108,6 +108,47 @@ export const onAssignmentCreated = functions.firestore.onDocumentWritten(
       }
     }
 );
+
+export const deleteUserAccount = functions.https.onCall(async (request) => {
+  // 1. Must be authenticated
+  if (!request.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const uid = request.auth.uid;
+
+  // 2. Fetch user doc and block admin self-deletion
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "User document not found.");
+  }
+
+  const role = userDoc.data()?.role;
+  if (role === "admin") {
+    throw new functions.https.HttpsError(
+        "permission-denied",
+        "Admins cannot delete their own account."
+    );
+  }
+
+  // 3. Delete Firestore data in a batch
+  const batch = db.batch();
+
+  batch.delete(db.collection("users").doc(uid));
+
+  const registrations = await db.collection("registrations").where("userId", "==", uid).get();
+  registrations.forEach((doc) => batch.delete(doc.ref));
+
+  const volunteerRequests = await db.collection("volunteer_requests").where("userId", "==", uid).get();
+  volunteerRequests.forEach((doc) => batch.delete(doc.ref));
+
+  await batch.commit();
+
+  // 4. Delete Firebase Auth account
+  await admin.auth().deleteUser(uid);
+
+  return { success: true };
+});
 
 // ── 3. D-3 and D-1 reminders ─────────────────────────────────────────────────
 // Runs every day at 08:00 WIB (01:00 UTC).
@@ -143,7 +184,7 @@ export const sendServiceReminders = functions.scheduler.onSchedule(
 
             await sendToUser(
                 assignment.volunteerId,
-            daysAhead === 1 ? '⏰ Besok Ada Ibadah!' : '📅 3 Hari Lagi',
+            daysAhead === 1 ? 'Besok Ada Ibadah!' : '3 Hari Lagi',
             `Ingat, Anda bertugas sebagai ${assignment.role} untuk ${ministry} pada ${dateStr}.`,
             { screen: 'schedules', eventId: doc.id },
             );
