@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:613670630772:android:28a6e5b754fce0e7ef2821",
+        "mobilesdk_app_id": "1:613670630772:android:0ca57b8ddb0eb53cef2821",
         "android_client_info": {
-          "package_name": "com.example.gkias_app"
+          "package_name": "com.bryant.gkias_app"
         }
       },
       "oauth_client": [],

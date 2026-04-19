@@ -1,5 +1,6 @@
 // staff_volunteer_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -764,6 +765,9 @@ class _DataInputDialogState extends State<_DataInputDialog> {
             controller: f.controller,
             keyboardType: f.keyboardType,
             maxLines: f.maxLines,
+            inputFormatters: f.keyboardType == TextInputType.number
+                ? [FilteringTextInputFormatter.digitsOnly]
+                : null,
             style: const TextStyle(fontSize: 14, color: _textMain),
             decoration: InputDecoration(
               labelText: f.label,
